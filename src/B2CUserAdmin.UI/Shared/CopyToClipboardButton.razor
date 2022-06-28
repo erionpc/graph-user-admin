@@ -1,0 +1,58 @@
+﻿@inject ClipboardService ClipboardService
+
+@* https://www.daveabrock.com/2021/02/18/copy-to-clipboard-markdown-editor/ *@
+
+<button class="@buttonData.ButtonClass" disabled="@buttonData.IsDisabled" 
+        @onclick="CopyToClipboard">
+    <i class="@buttonData.FontAwesomeClass"></i> @buttonData.ButtonText
+</button>
+
+@code {
+    private const string _successButtonClass = "btn btn-success";
+    private const string _infoButtonClass = "btn btn-info";
+    private const string _errorButtonClass = "btn btn-danger";
+
+    private const string _copyToClipboardText = "Copy to clipboard";
+    private const string _copiedToClipboardText = "Copied to clipboard!";
+    private const string _errorText = "Oops. Try again.";
+
+    private const string _fontAwesomeCopyClass = "fa fa-clipboard";
+    private const string _fontAwesomeCopiedClass = "fa fa-check";
+    private const string _fontAwesomeErrorClass = "fa fa-exclamation-circle";
+
+    [Parameter] 
+    public string Text { get; set; }
+
+    record ButtonData(bool IsDisabled, string ButtonText,
+        string ButtonClass, string FontAwesomeClass);
+
+    ButtonData buttonData = new(false, _copyToClipboardText,
+                      _infoButtonClass, _fontAwesomeCopyClass);
+
+    public async Task CopyToClipboard()
+    {
+        var originalData = buttonData;
+        try
+        {
+            await ClipboardService.WriteTextAsync(Text);
+
+            buttonData = new ButtonData(true, _copiedToClipboardText,
+                                    _successButtonClass, _fontAwesomeCopiedClass);
+            await TriggerButtonState();
+            buttonData = originalData;
+        }
+        catch
+        {
+            buttonData = new ButtonData(true, _errorText,
+                                    _errorButtonClass, _fontAwesomeErrorClass);
+            await TriggerButtonState();
+            buttonData = originalData;
+        }
+    }
+
+    private async Task TriggerButtonState()
+    {
+        StateHasChanged();
+        await Task.Delay(TimeSpan.FromMilliseconds(1500));
+    }
+}

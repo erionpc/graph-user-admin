@@ -1,0 +1,205 @@
+﻿@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using B2CUserAdmin.Shared.Users
+@using B2CUserAdmin.Shared.Paging
+@using B2CUserAdmin.UI.Services.Users
+
+@inject IToastService toastService
+@inject UserService userService
+@inject IJSRuntime JSRuntime
+
+<div class="row g-3 mb-3 mt-0 align-items-end">
+
+    <div class="col-3">
+        <input placeholder="Email" @bind-value="userSearchRequest.Email" class="form-control">
+    </div>
+    <div class="col-auto">
+        <div class="d-inline">
+            <button class="btn btn-primary" @onclick="SearchUsersAsync">Search</button>
+        </div>
+
+        @if (showClearSearchButton)
+        {
+            <div class="d-inline" style="margin-left:2rem;">
+                <button class="btn btn-secondary" @onclick="ClearSearchAsync">Clear</button>
+            </div>
+        }
+    </div>
+</div>
+
+@if (usersPagedList == null)
+{
+    <Loading />
+}
+else
+{
+    <div class="table-responsive">
+
+        <table class="table table-sm table-striped table-hover caption-top">
+            <caption>List of users</caption>
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th class="align-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var user in usersPagedList)
+                {
+                    <tr>
+                        <td><NavLink href="@GetUserUrl(user.ObjectId)">@user.Email</NavLink></td>
+                        @* todo; implement toggle switch? <td><input type="checkbox" value="@user.AccountEnabled" data-toggle="toggle" data-onstyle="outline-success" data-offstyle="outline-danger" data-on="Enabled" data-off="Disabled" @onclick="() => UpdateAccountStatus(user)"></td>*@
+
+                        @*<td>
+
+
+                            <button class="btn btn-sm @(user.AccountEnabled.GetValueOrDefault(true) ? "btn-warning" : "btn-success")"
+                                @onclick="async () => await UpdateAccountStatusAsync(user)">
+                                    @(user.AccountEnabled.GetValueOrDefault(true) ? "Disable account" : "Enable account")
+                                </button>
+                        </td>*@
+                        <td class="align-right">
+                            <NavLink class="btn btn-sm btn-warning" href="@GetUserEditUrl(user.ObjectId)"><span class="fa fa-pencil-square-o"></span></NavLink>
+                            <DeleteUserButton User="user" OnUserDeleted=@DeleteUserAsync></DeleteUserButton>
+                        </td>
+                    </tr>
+                 }
+            </tbody>
+        </table>
+
+        @{var prevDisabled = !usersPagedList.HasPreviousPage ? "disabled" : "";
+            var nextDisabled = !usersPagedList.HasNextPage ? "disabled" : "";
+        }
+
+        <a asp-page="./Index"
+           @onclick="PreviousPage"
+           asp-route-pageIndex="@(usersPagedList.PageIndex - 1)"
+           class="btn btn-default @prevDisabled">
+            Previous
+        </a>
+        <a asp-page="./Index"
+           @onclick="NextPage"
+           asp-route-pageIndex="@(usersPagedList.PageIndex + 1)"
+           class="btn btn-default @nextDisabled">
+            Next
+        </a>
+
+    </div>
+}
+
+@code {
+    [Parameter] public string? EmailFilter { get => userSearchRequest.Email; set => userSearchRequest.Email = value; }
+    [Parameter] public int? PageIndex { get; set; }
+
+    private IList<UserViewModel>? users;
+
+    private PaginatedList<UserViewModel> usersPagedList;
+
+    private UserSearchRequestModel userSearchRequest { get; set; } = new();
+
+    private bool showClearSearchButton;
+
+    protected string GetUserUrl(string Id)
+    {
+        return $"/users/{Id}";
+    }
+
+    protected string GetUserEditUrl(string Id)
+    {
+        return $"{GetUserUrl(Id)}/edit";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetUserListAsync();
+    }
+
+    private async Task NextPage()
+    {
+        await GetUserListAsync((usersPagedList.PageIndex + 1));
+    }
+
+    private async Task PreviousPage()
+    {
+        await GetUserListAsync((usersPagedList.PageIndex - 1));
+    }
+
+
+    private async Task GetUserListAsync(int page = 1)
+    {
+        try
+        {
+            usersPagedList = await userService.GetUsersAsync(userSearchRequest, page);
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+
+    public async Task OnGetAsync(int? pageIndex)
+    {
+        if (pageIndex.HasValue)
+        {
+            await GetUserListAsync();
+        }
+        else
+        {
+            await GetUserListAsync(pageIndex.Value);
+        }
+    }
+
+    //private async Task UpdateAccountStatusAsync(UserViewModel user)
+    //{
+    //    bool confirmed = await JSRuntime.InvokeAsync<bool>
+    //("confirm", $"Are you sure you want to disable {user.DisplayName}?"); // Confirm
+    //    if (confirmed)
+    //    {
+    //        UpdateAccountStatus(user);
+    //    }
+    //}
+
+    //private void UpdateAccountStatus(UserViewModel user)
+    //{
+    //    // todo; implement
+    //    Console.WriteLine($"doing stuff for account {user.ObjectId}");
+    //    bool? success = !user.AccountEnabled.GetValueOrDefault(true);
+
+    //    if (success.HasValue && success.Value) toastService.ShowSuccess("Account disabled.");
+    //}
+
+    private async Task DeleteUserAsync(UserViewModel user)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>
+        ("confirm", $"Are you sure you want to delete {user.DisplayName}?"); // Confirm
+        if (confirmed)
+        {
+            await DeletedUserCallback(user).ConfigureAwait(false);
+        }
+    }
+
+    private async Task DeletedUserCallback(UserViewModel user)
+    {
+        bool deleted = await userService.DeleteUserAsync(user.ObjectId).ConfigureAwait(false);
+
+        if (deleted)
+        {
+            bool? success = usersPagedList?.Remove(user);
+
+            if (success.HasValue && success.Value) toastService.ShowSuccess("User deleted.");
+        }
+    }
+
+    private async Task SearchUsersAsync()
+    {
+        await GetUserListAsync();
+        showClearSearchButton = !string.IsNullOrWhiteSpace(userSearchRequest.Email);
+    }
+
+    private async Task ClearSearchAsync()
+    {
+        showClearSearchButton = false;
+        userSearchRequest.Email = string.Empty;
+        await GetUserListAsync();
+    }
+}

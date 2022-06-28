@@ -1,0 +1,16 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
+
+<AuthorizeView>
+    <Authorized>
+        <h2>B2C Admin UI</h2>
+        <div>This tool allows you to manage the B2C directory and the identity store</div>
+    </Authorized>
+    <NotAuthorized>
+        @if (!context.User.Identity!.IsAuthenticated)
+        {
+            <RedirectToLogin />
+        }
+    </NotAuthorized>
+</AuthorizeView>

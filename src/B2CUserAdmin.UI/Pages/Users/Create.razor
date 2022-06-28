@@ -1,0 +1,93 @@
+﻿@page "/users/Create"
+@using System.ComponentModel.DataAnnotations
+@using B2CUserAdmin.Shared.Users
+@using B2CUserAdmin.UI.Services.Users
+
+@inject IJSRuntime JSRuntime
+@inject UserService UserService
+@inject NavigationManager Navigation
+@inject IToastService toastService
+
+<h1>New user details</h1>
+
+<div>
+    <EditForm Model="_userRequestModel" OnValidSubmit="@CreateUserWithConfirmationAsync">
+        <DataAnnotationsValidator />
+
+        <div class="form-group">
+            <label class="control-label col-md-2">Email</label>
+            <div class="col-md-3">
+                <InputText class="form-control" @bind-Value="_userRequestModel.Email" />
+                <ValidationMessage For="(() => _userRequestModel.Email)" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2">Display name</label>
+            <div class="col-md-3">
+                <InputText class="form-control" @bind-Value="_userRequestModel.DisplayName" />
+                <ValidationMessage For="(() => _userRequestModel.DisplayName)" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2">First name</label>
+            <div class="col-md-3">
+                <InputText class="form-control" @bind-Value="_userRequestModel.FirstName" />
+                <ValidationMessage For="(() => _userRequestModel.FirstName)" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2">Last name</label>
+            <div class="col-md-3">
+                <InputText class="form-control" @bind-Value="_userRequestModel.LastName" />
+                <ValidationMessage For="(() => _userRequestModel.LastName)" />
+            </div>
+        </div>
+                        
+        @*<button class="btn btn-secondary ml-5">Cancel</button>*@
+
+        @* if the form is invalid OR not modified yet, the submit is disabled *@
+        <button class="btn btn-primary" type="submit" disabled="@(!context.Validate() || !context.IsModified())">Create User</button>
+
+    </EditForm>
+</div>
+
+
+@code {
+
+    private UserViewModel _userRequestModel = new UserViewModel()
+    {
+        
+    };
+
+    [Required]
+    public Guid? BrandId { get; set; }
+
+    private async Task CreateUserWithConfirmationAsync()
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to invite: {_userRequestModel.Email}?");
+        if (confirmed)
+        {
+            await CreateUserAsync();
+        }
+    }
+
+    private async Task CreateUserAsync()
+    {
+        Console.WriteLine("Create user executed");
+
+        HttpResponseMessage respond = await UserService.PostUserAsync(_userRequestModel);
+        if (respond.IsSuccessStatusCode)
+        {
+            toastService.ShowSuccess("User created!");
+            Navigation.NavigateTo($"/users");
+        }
+    }
+
+    private async Task AddClaims()
+    {
+        Navigation.NavigateTo($"/users/{_userRequestModel.ObjectId}/Claims/Create");
+    }
+}
