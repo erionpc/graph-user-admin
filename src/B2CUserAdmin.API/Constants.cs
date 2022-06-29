@@ -14,5 +14,10 @@ namespace B2CUserAdmin.API
         {
             public const string EmailAddress = "emailAddress";
         }
+
+        public class DelegatedPermissions
+        {
+            public static readonly string[] All = new[] { "User.ReadWrite.All" };
+        }
     }
 }

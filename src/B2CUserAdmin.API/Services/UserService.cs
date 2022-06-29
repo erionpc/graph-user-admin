@@ -18,6 +18,53 @@ namespace B2CUserAdmin.API.Services
         {
         }
 
+        public async Task<IEnumerable<UserViewModel>> GetAllAsync(int page = 1, int pageSize = 25)
+        {
+            var result = await GraphClient.Users
+                .Request()
+                .Select(e => new
+                {
+                    e.Id,
+                    e.Identities,
+                    e.DisplayName,
+                    e.GivenName,
+                    e.Surname
+                })
+                .Top(pageSize)
+                .GetAsync();
+
+            //var pageIterator = PageIterator<User>
+            //    .CreatePageIterator(
+            //        GraphClient,
+            //        result,
+            //        (m) =>
+            //        {
+            //            Console.WriteLine(m.Subject);
+            //            return true;
+            //        },
+            //        // Used to configure subsequent page
+            //        // requests
+            //        (req) =>
+            //        {
+            //            // Re-add the header to subsequent requests
+            //            req.Header("Prefer", "outlook.body-content-type=\"text\"");
+            //            return req;
+            //        }
+            //    );
+
+            //await pageIterator.IterateAsync();
+
+            if (result == null)
+                return null;
+
+            return result.Select(x => new UserViewModel(
+                x.Id, 
+                x.DisplayName, 
+                x.Identities?.FirstOrDefault(x => x.SignInType == Constants.SignInTypes.EmailAddress)?.IssuerAssignedId, 
+                x.GivenName, 
+                x.Surname));
+        }
+
         public async Task<UserViewModel> GetByObjectIdAsync(Guid objectId)
         {
             var result = await GraphClient.Users[objectId.ToString()]

@@ -28,7 +28,7 @@ namespace B2CUserAdmin.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<IEnumerable<UserViewModel>>> GetUsers(Guid? objectId = null, string emailSearch = null)
+        public async Task<ActionResult<IEnumerable<UserViewModel>>> GetUsers(Guid? objectId = null, string emailSearch = null, int page = 1, int pageSize = 25)
         {
             if (objectId.HasValue)
             {
@@ -38,23 +38,20 @@ namespace B2CUserAdmin.API.Controllers
 
                 return Ok(user);
             }
+
+            if (emailSearch is null)
+            {
+                var users = await UserService.GetAllAsync(page, pageSize);
+
+                return Ok(users);
+            }
             else
             {
-                return NotFound();
+                //var users = await UserService.SearchByEmailAsync(emailSearch, includeClaims);
+
+                //return Ok(users);
+                return null;
             }
-
-            //if (emailSearch is null)
-            //{
-            //    var users = await UserService.GetAllAsync();
-
-            //    return Ok(users);
-            //}
-            //else
-            //{
-            //    var users = await UserService.SearchByEmailAsync(emailSearch, includeClaims);
-
-            //    return Ok(users);
-            //}
         }
 
         //[HttpGet("{objectId}")]

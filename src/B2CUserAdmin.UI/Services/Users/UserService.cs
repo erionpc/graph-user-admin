@@ -56,12 +56,13 @@ namespace B2CUserAdmin.UI.Services.Users
             //return patch;
         }
 
-        public async Task<PaginatedList<UserViewModel>> GetUsersAsync(UserSearchRequestModel? userSearchQueryParameters = null, int page = 0, int pageSize = 25)
+        public async Task<PaginatedList<UserViewModel>> GetUsersAsync(UserSearchRequestModel? userSearchQueryParameters = null, int page = 1, int pageSize = 25)
         {
-            string queryParameters = !string.IsNullOrEmpty(userSearchQueryParameters?.Email) ? $"?emailSearch={userSearchQueryParameters?.Email}" : "";
+            string queryParameters = $"?page={page}&pageSize={pageSize}";
+            queryParameters += !string.IsNullOrEmpty(userSearchQueryParameters?.Email) ? $"&emailSearch={userSearchQueryParameters?.Email}" : "";
             var apiResult = await _httpClient.GetFromJsonAsync<IEnumerable<UserViewModel>>($"{_usersBaseUri}{queryParameters}");
 
-            PaginatedList<UserViewModel>? allUsersList = PaginatedList<UserViewModel>.Create(apiResult!.AsQueryable(), page, pageSize);
+            PaginatedList<UserViewModel>? allUsersList = PaginatedList<UserViewModel>.Create(apiResult!.AsQueryable(), 0, 25);
 
             return allUsersList;
         }

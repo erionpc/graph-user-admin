@@ -38,6 +38,9 @@ else
             <caption>List of users</caption>
             <thead>
                 <tr>
+                    <th>Display name</th>
+                    <th>Name</th>
+                    <th>Surname</th>
                     <th>Email</th>
                     <th class="align-left">Actions</th>
                 </tr>
@@ -47,17 +50,10 @@ else
                 @foreach (var user in usersPagedList)
                 {
                     <tr>
-                        <td><NavLink href="@GetUserUrl(user.ObjectId)">@user.Email</NavLink></td>
-                        @* todo; implement toggle switch? <td><input type="checkbox" value="@user.AccountEnabled" data-toggle="toggle" data-onstyle="outline-success" data-offstyle="outline-danger" data-on="Enabled" data-off="Disabled" @onclick="() => UpdateAccountStatus(user)"></td>*@
-
-                        @*<td>
-
-
-                            <button class="btn btn-sm @(user.AccountEnabled.GetValueOrDefault(true) ? "btn-warning" : "btn-success")"
-                                @onclick="async () => await UpdateAccountStatusAsync(user)">
-                                    @(user.AccountEnabled.GetValueOrDefault(true) ? "Disable account" : "Enable account")
-                                </button>
-                        </td>*@
+                        <td><NavLink href="@GetUserUrl(user.ObjectId)">@user.DisplayName</NavLink></td>
+                        <td>@user.FirstName</td>
+                        <td>@user.LastName</td>
+                        <td>@user.Email</td>
                         <td class="align-right">
                             <NavLink class="btn btn-sm btn-warning" href="@GetUserEditUrl(user.ObjectId)"><span class="fa fa-pencil-square-o"></span></NavLink>
                             <DeleteUserButton User="user" OnUserDeleted=@DeleteUserAsync></DeleteUserButton>
@@ -124,7 +120,6 @@ else
         await GetUserListAsync((usersPagedList.PageIndex - 1));
     }
 
-
     private async Task GetUserListAsync(int page = 1)
     {
         try
@@ -148,25 +143,6 @@ else
             await GetUserListAsync(pageIndex.Value);
         }
     }
-
-    //private async Task UpdateAccountStatusAsync(UserViewModel user)
-    //{
-    //    bool confirmed = await JSRuntime.InvokeAsync<bool>
-    //("confirm", $"Are you sure you want to disable {user.DisplayName}?"); // Confirm
-    //    if (confirmed)
-    //    {
-    //        UpdateAccountStatus(user);
-    //    }
-    //}
-
-    //private void UpdateAccountStatus(UserViewModel user)
-    //{
-    //    // todo; implement
-    //    Console.WriteLine($"doing stuff for account {user.ObjectId}");
-    //    bool? success = !user.AccountEnabled.GetValueOrDefault(true);
-
-    //    if (success.HasValue && success.Value) toastService.ShowSuccess("Account disabled.");
-    //}
 
     private async Task DeleteUserAsync(UserViewModel user)
     {

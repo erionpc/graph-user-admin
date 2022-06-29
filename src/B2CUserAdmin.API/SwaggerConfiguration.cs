@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using B2CUserAdmin.API.Authorization;
 using B2CUserAdmin.API.Models;
 
 namespace B2CUserAdmin.API
@@ -44,7 +43,7 @@ namespace B2CUserAdmin.API
                         Implicit = new OpenApiOAuthFlow
                         {
                             AuthorizationUrl = new Uri(authenticationOptions.AuthorizationUrl),
-                            Scopes = DelegatedPermissions.All.ToDictionary(p =>
+                            Scopes = Constants.DelegatedPermissions.All.ToDictionary(p =>
                                 $"{authenticationOptions.ApplicationIdUri}/{p}")
                         }
                     }
@@ -80,7 +79,7 @@ namespace B2CUserAdmin.API
                         },
                         UnresolvedReference = true
                     },
-                    DelegatedPermissions.All.Select( x=> $"{_appIdUri}/{x}" ).ToArray()
+                    Constants.DelegatedPermissions.All.Select( x=> $"{_appIdUri}/{x}" ).ToArray()
                 }
             });
         }
