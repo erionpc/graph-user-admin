@@ -50,12 +50,12 @@ else
                 @foreach (var user in usersPagedList)
                 {
                     <tr>
-                        <td><NavLink href="@GetUserUrl(user.ObjectId)">@user.DisplayName</NavLink></td>
+                        <td><NavLink href="@GetUserUrl(user.ObjectId!)">@user.DisplayName</NavLink></td>
                         <td>@user.FirstName</td>
                         <td>@user.LastName</td>
                         <td>@user.Email</td>
                         <td class="align-right">
-                            <NavLink class="btn btn-sm btn-warning" href="@GetUserEditUrl(user.ObjectId)"><span class="fa fa-pencil-square-o"></span></NavLink>
+                            <NavLink class="btn btn-sm btn-warning" href="@GetUserEditUrl(user.ObjectId!)"><span class="fa fa-pencil-square-o"></span></NavLink>
                             <DeleteUserButton User="user" OnUserDeleted=@DeleteUserAsync></DeleteUserButton>
                         </td>
                     </tr>
@@ -87,9 +87,7 @@ else
     [Parameter] public string? EmailFilter { get => userSearchRequest.Email; set => userSearchRequest.Email = value; }
     [Parameter] public int? PageIndex { get; set; }
 
-    private IList<UserViewModel>? users;
-
-    private PaginatedList<UserViewModel> usersPagedList;
+    private PaginatedList<UserViewModel>? usersPagedList;
 
     private UserSearchRequestModel userSearchRequest { get; set; } = new();
 
@@ -112,12 +110,12 @@ else
 
     private async Task NextPage()
     {
-        await GetUserListAsync((usersPagedList.PageIndex + 1));
+        await GetUserListAsync((usersPagedList?.PageIndex ?? 0 + 1));
     }
 
     private async Task PreviousPage()
     {
-        await GetUserListAsync((usersPagedList.PageIndex - 1));
+        await GetUserListAsync((usersPagedList?.PageIndex ?? 2 - 1));
     }
 
     private async Task GetUserListAsync(int page = 1)
@@ -134,7 +132,7 @@ else
 
     public async Task OnGetAsync(int? pageIndex)
     {
-        if (pageIndex.HasValue)
+        if (!pageIndex.HasValue)
         {
             await GetUserListAsync();
         }
@@ -146,8 +144,7 @@ else
 
     private async Task DeleteUserAsync(UserViewModel user)
     {
-        bool confirmed = await JSRuntime.InvokeAsync<bool>
-        ("confirm", $"Are you sure you want to delete {user.DisplayName}?"); // Confirm
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete {user.DisplayName}?");
         if (confirmed)
         {
             await DeletedUserCallback(user).ConfigureAwait(false);
@@ -156,13 +153,14 @@ else
 
     private async Task DeletedUserCallback(UserViewModel user)
     {
-        bool deleted = await userService.DeleteUserAsync(user.ObjectId).ConfigureAwait(false);
+        bool deleted = await userService.DeleteUserAsync(user.ObjectId!);
 
         if (deleted)
         {
             bool? success = usersPagedList?.Remove(user);
 
-            if (success.HasValue && success.Value) toastService.ShowSuccess("User deleted.");
+            if (success.HasValue && success.Value)
+                toastService.ShowSuccess("User deleted");
         }
     }
 
