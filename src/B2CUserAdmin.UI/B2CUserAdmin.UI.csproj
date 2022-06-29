@@ -28,8 +28,4 @@
 	  <ProjectReference Include="..\B2CUserAdmin.Shared\B2CUserAdmin.Shared.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="Abstractions\" />
-	</ItemGroup>
-
 </Project>
