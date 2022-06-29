@@ -12,7 +12,7 @@ Managing the AAD B2C users in the directory
 2. Create an app registration for the API
 3. Set supported account types: "My organization only"
 4. Set a redirect URI (web) = https://localhost:5001/swagger/oauth2-redirect.html
-5. Expose Access and Id tokens (needed just for the Swagger UI)
+5. Expose Access and Id tokens (needed just for the Swagger UI authorisation)
 6. Create a client secret (copy the value for later)
 7. API permissions: give delegated access to Microsoft Graph: offline_access and openid. Give Application access to User.ManageIdentities.All and User.ReadWrite.All. Grant admin consent.
 8. Expose an API: Set an application ID URI and add a scope: User.ReadWrite.All
@@ -28,4 +28,4 @@ Managing the AAD B2C users in the directory
 3. Log in to the UI using your B2C account. In a real scenario you would create an Enterprise application and limit the access to specific users.
 
 ## Deploy to app service
-All you will need to deploy is B2CUserAdmin.API. This will deploy the API on the root and the UI in a "wwwroot" folder. Make sure that the configuration keys are set correctly on both files /appsettings.json and /wwwroot/appsettings.json.
+All you will need to deploy is B2CUserAdmin.API. This will deploy the API on the root and the UI in a "wwwroot" folder. Make sure that the configuration keys are set correctly on both files the API and the UI.
