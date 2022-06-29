@@ -10,6 +10,11 @@ namespace B2CUserAdmin.API.Abstractions
     public interface IUserService
     {
         Task<UserViewModel> GetByObjectIdAsync(Guid value);
-        Task<IEnumerable<UserViewModel>> GetAllAsync(int page = 1, int pageSize = 25);
+        Task<IEnumerable<UserViewModel>> GetAllAsync();
+        Task<IEnumerable<UserViewModel>> GetByEmailAsync(string emailSearch);
+        Task<UserViewModel> CreateAsync(UserViewModel user);
+        Task<string> InviteAsync(UserViewModel user);
+        Task UpdateAsync(UserViewModel updatedUser);
+        Task DeleteAsync(string objectId);
     }
 }

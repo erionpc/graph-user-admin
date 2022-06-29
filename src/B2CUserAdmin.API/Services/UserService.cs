@@ -1,4 +1,5 @@
 ﻿using B2CUserAdmin.API.Abstractions;
+using B2CUserAdmin.API.Exceptions;
 using B2CUserAdmin.API.Extensions;
 using B2CUserAdmin.API.Models;
 using B2CUserAdmin.Shared.Users;
@@ -18,143 +19,86 @@ namespace B2CUserAdmin.API.Services
         {
         }
 
-        public async Task<IEnumerable<UserViewModel>> GetAllAsync(int page = 1, int pageSize = 25)
+        public async Task<IEnumerable<UserViewModel>> GetAllAsync()
         {
             var result = await GraphClient.Users
                 .Request()
-                .Select(e => new
-                {
-                    e.Id,
-                    e.Identities,
-                    e.DisplayName,
-                    e.GivenName,
-                    e.Surname
-                })
-                .Top(pageSize)
+                .SelectUserFields()
                 .GetAsync();
 
-            //var pageIterator = PageIterator<User>
-            //    .CreatePageIterator(
-            //        GraphClient,
-            //        result,
-            //        (m) =>
-            //        {
-            //            Console.WriteLine(m.Subject);
-            //            return true;
-            //        },
-            //        // Used to configure subsequent page
-            //        // requests
-            //        (req) =>
-            //        {
-            //            // Re-add the header to subsequent requests
-            //            req.Header("Prefer", "outlook.body-content-type=\"text\"");
-            //            return req;
-            //        }
-            //    );
+            // Todo: Implement paging
 
-            //await pageIterator.IterateAsync();
+            return result.MapToUserViewModelCollection();
+        }
 
-            if (result == null)
-                return null;
+        public async Task<IEnumerable<UserViewModel>> GetByEmailAsync(string emailSearch)
+        {
+            var result = await GraphClient.Users
+                .Request()
+                .Filter($"identities/any(c:c/issuerAssignedId eq '{emailSearch}' and c/issuer eq '{AppSettings.TenantName}')")
+                .SelectUserFields()
+                .GetAsync();
 
-            return result.Select(x => new UserViewModel(
-                x.Id, 
-                x.DisplayName, 
-                x.Identities?.FirstOrDefault(x => x.SignInType == Constants.SignInTypes.EmailAddress)?.IssuerAssignedId, 
-                x.GivenName, 
-                x.Surname));
+            return result.MapToUserViewModelCollection();
         }
 
         public async Task<UserViewModel> GetByObjectIdAsync(Guid objectId)
         {
             var result = await GraphClient.Users[objectId.ToString()]
                 .Request()
-                .Select(e => new
-                {
-                    e.Id,
-                    e.Mail,
-                    e.DisplayName,
-                    e.GivenName,
-                    e.Surname,
-                    e.CompanyName
-                })
+                .SelectUserFields()
                 .GetAsync();
 
             if (result == null)
                 return null;
 
-            return new UserViewModel(result.Id, result.DisplayName, result.Mail, result.GivenName, result.Surname);
+            return result.MapToUserViewModel();
         }
 
-        public async Task<string> GetUserBySignInName(string userId)
+        public Task DeleteAsync(string objectId) =>
+            GraphClient.Users[objectId].Request().DeleteAsync();
+
+        public async Task UpdateAsync(UserViewModel updatedUser)
         {
-            var result = await GraphClient.Users
+            var existingB2CUser = await GraphClient.Users[updatedUser.ObjectId.ToString()]
                 .Request()
-                .Filter($"identities/any(c:c/issuerAssignedId eq '{userId}' and c/issuer eq '{AppSettings.TenantName}')")
-                .Select(e => new
-                {
-                    e.DisplayName,
-                    e.Id,
-                    e.Identities
-                })
+                .SelectUserFields()
                 .GetAsync();
 
-            if (result.Count > 0)
-            {
-                return result.FirstOrDefault().Id;
-            }
+            if (existingB2CUser == null)
+                throw new UserNotFoundException();
 
-            return null;
+            existingB2CUser.PatchFrom(updatedUser);
+
+            await GraphClient.Users[existingB2CUser.Id].Request().UpdateAsync(existingB2CUser);
         }
 
-        public async Task<bool> DeleteUserByObjectId(string objectId)
+        public async Task<UserViewModel> CreateAsync(UserViewModel user)
         {
-            try
-            {
-                await GraphClient.Users[objectId].Request().DeleteAsync();
-                return true;
-            }
-            catch (Exception e)
-            {
-                Logger.LogError(e, $"Unable to delete user with object id {objectId} ");
-                return false;
-            }
-        }
-
-        public async Task<string> CreateAccount(string email, string displayName = null, string firstName = null, string lastName = null)
-        {
-            var result = await GraphClient.Users
+            var createdUser = await GraphClient.Users
                 .Request()
                 .AddAsync(new User
                 {
-                    GivenName = firstName ?? string.Empty,
-                    Surname = lastName ?? string.Empty,
-                    DisplayName = displayName ?? email,
+                    GivenName = user.FirstName,
+                    Surname = user.LastName,
+                    DisplayName = user.DisplayName,
                     Identities = new List<ObjectIdentity>
                     {
                         new ObjectIdentity()
                         {
-                            SignInType = "emailAddress",
+                            SignInType = Constants.SignInTypes.EmailAddress,
                             Issuer = AppSettings.TenantName,
-                            IssuerAssignedId = email
+                            IssuerAssignedId = user.Email
                         }
                     },
                     PasswordProfile = new PasswordProfile()
                     {
-                        Password = GenerateNewPassword(64)
+                        Password = GenerateNewPassword(16)                        
                     },
-                    PasswordPolicies = "DisablePasswordExpiration",
+                    PasswordPolicies = Constants.PasswordPolicies.DisablePasswordExpiration                    
                 });
 
-            string userId = result.Id;
-            return userId;
-        }
-
-        public async Task UpdateUserAsync(B2CUser updatedUser)
-        {
-            var existingB2CUser = await GraphClient.Users[updatedUser.ObjectId.ToString()].Request().GetAsync();
-            existingB2CUser.PatchFrom(updatedUser);
-            _ = await GraphClient.Users[existingB2CUser.Id].Request().UpdateAsync(existingB2CUser);
+            return createdUser.MapToUserViewModel();
         }
 
         static string GenerateNewPassword(int length)
@@ -171,6 +115,12 @@ namespace B2CUserAdmin.API.Services
                 );
 
             return generated.Replace("!", string.Empty);
+        }
+
+        public Task<string> InviteAsync(UserViewModel user)
+        {
+            throw new NotImplementedException();
+            // Todo: implement invite with token hint
         }
     }
 }

@@ -11,7 +11,7 @@
 <h1>New user details</h1>
 
 <div>
-    <EditForm Model="_userRequestModel" OnValidSubmit="@CreateUserWithConfirmationAsync">
+    <EditForm Model="_userRequestModel" OnValidSubmit="@CreateUserAsync">
         <DataAnnotationsValidator />
 
         <div class="form-group">
@@ -45,10 +45,7 @@
                 <ValidationMessage For="(() => _userRequestModel.LastName)" />
             </div>
         </div>
-                        
-        @*<button class="btn btn-secondary ml-5">Cancel</button>*@
-
-        @* if the form is invalid OR not modified yet, the submit is disabled *@
+        
         <button class="btn btn-primary" type="submit" disabled="@(!context.Validate() || !context.IsModified())">Create User</button>
 
     </EditForm>
@@ -62,32 +59,20 @@
         
     };
 
-    [Required]
-    public Guid? BrandId { get; set; }
-
-    private async Task CreateUserWithConfirmationAsync()
-    {
-        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to invite: {_userRequestModel.Email}?");
-        if (confirmed)
-        {
-            await CreateUserAsync();
-        }
-    }
-
     private async Task CreateUserAsync()
     {
-        Console.WriteLine("Create user executed");
-
-        HttpResponseMessage respond = await UserService.PostUserAsync(_userRequestModel);
-        if (respond.IsSuccessStatusCode)
+        try
         {
-            toastService.ShowSuccess("User created!");
-            Navigation.NavigateTo($"/users");
+            var user = await UserService.PostUserAsync(_userRequestModel);
+            if (user != null)
+            {
+                toastService.ShowSuccess($"User {user.ObjectId} created");
+                Navigation.NavigateTo($"/users");
+            }
         }
-    }
-
-    private async Task AddClaims()
-    {
-        Navigation.NavigateTo($"/users/{_userRequestModel.ObjectId}/Claims/Create");
+        catch (Exception)
+        {
+            toastService.ShowError($"User not created!");
+        }
     }
 }

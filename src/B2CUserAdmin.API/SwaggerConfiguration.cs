@@ -19,7 +19,7 @@ namespace B2CUserAdmin.API
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Version = "v1",
-                    Title = "AAD B2C User Management API by erionpc",
+                    Title = "AAD B2C Admin API by erionpc",
                     Description = "Web API for managing AAD B2C users",
                     TermsOfService = new Uri("https://example.com/terms"),
                     Contact = new OpenApiContact

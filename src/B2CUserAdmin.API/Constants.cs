@@ -19,5 +19,11 @@ namespace B2CUserAdmin.API
         {
             public static readonly string[] All = new[] { "User.ReadWrite.All" };
         }
+
+        public class PasswordPolicies
+        {
+            public const string DisablePasswordExpiration = "DisablePasswordExpiration";
+            public const string DisableStrongPassword = "DisableStrongPassword";
+        }
     }
 }

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Text.Json;
 
-namespace B2CUserAdmin.UI.Services
+namespace B2CUserAdmin.UI.Extensions
 {
-    internal static class ServiceExtensions
+    internal static class GenericExtensions
     {
         public static T Clone<T>(this T source) where T : notnull
         {

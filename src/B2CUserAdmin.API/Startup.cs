@@ -34,7 +34,6 @@ namespace B2CUserAdmin.API
 
         private AuthenticationConfig authenticationOptions;
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             authenticationOptions = Configuration.GetSection("AzureAd").Get<AuthenticationConfig>();
@@ -60,7 +59,6 @@ namespace B2CUserAdmin.API
             services.AddApplicationInsightsTelemetry();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseSwagger();
@@ -69,7 +67,7 @@ namespace B2CUserAdmin.API
             {
                 app.UseSwaggerUI(o =>
                 {
-                    o.SwaggerEndpoint("/swagger/v1/swagger.json", "AAD B2C Users API");
+                    o.SwaggerEndpoint("/swagger/v1/swagger.json", "AAD B2C Admin API");
                     o.OAuthClientId(authenticationOptions.ClientId);
                     o.DefaultModelRendering(Swashbuckle.AspNetCore.SwaggerUI.ModelRendering.Example);
                     o.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);

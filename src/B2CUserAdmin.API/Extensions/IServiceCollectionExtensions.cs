@@ -15,25 +15,24 @@ namespace B2CUserAdmin.API.Extensions
     {
         public static IServiceCollection ConfigureSwagger(this IServiceCollection serviceCollection, AuthenticationConfig authenticationOptions)
         {
-            // Register the Swagger generator, defining 1 or more Swagger documents
             serviceCollection.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Version = "v1",
-                    Title = "Azure B2C Identity store API by Kocho",
-                    Description = "Web API for managing claims used by Azure B2C",
+                    Title = "AAD B2C Admin API",
+                    Description = "Web API for managing AAD B2C",
                     TermsOfService = new Uri("https://example.com/terms"),
                     Contact = new OpenApiContact
                     {
-                        Name = "Kocho Ltd",
-                        Email = "info@kocho.co.uk",
-                        Url = new Uri("https://kocho.co.uk"),
+                        Name = "Erion Pici",
+                        Email = "erionpc@gmail.com",
+                        Url = new Uri("https://erionpc.wordpress.com"),
                     },
                     License = new OpenApiLicense
                     {
-                        Name = "Use under LICX",
-                        Url = new Uri("https://example.com/license"),
+                        Name = "Use under license",
+                        Url = new Uri("https://www.gnu.org/licenses/lgpl-3.0.en.html"),
                     }
                 });
                 c.AddSecurityDefinition("aad-jwt", new OpenApiSecurityScheme
@@ -52,7 +51,6 @@ namespace B2CUserAdmin.API.Extensions
                 });
                 c.OperationFilter<OAuthSecurityRequirementOperationFilter>();
             });
-
 
             return serviceCollection;
         }

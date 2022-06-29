@@ -1,4 +1,5 @@
-﻿@using Palit.AspNetCore.JsonPatch.Extensions.Generate
+﻿@using B2CUserAdmin.UI.Extensions
+@using Palit.AspNetCore.JsonPatch.Extensions.Generate
 @using B2CUserAdmin.Shared.Users
 @using B2CUserAdmin.UI.Services.Users
 
@@ -75,16 +76,10 @@ else
             user = value;
             if (OriginalUser == null && user != null)
             {
-                OriginalUser = user.Clone();//Keep a back up so we can compare and track any changes.
+                OriginalUser = user.Clone(); // Keep a back up so we can compare and track any changes.
             }
         }
     }
-
-    [Parameter]
-    public EventCallback<UserPatchModel> Save_Click { get; set; }
-
-    [Parameter]
-    public EventCallback<UserPatchModel> OnFormSubmitted { get; set; }
 
     [Parameter]
     public EventCallback OnFormCancelled { get; set; }
@@ -94,7 +89,7 @@ else
 
     private async Task UpdateUser()
     {
-        bool updateSuccessful = await userService.PutUserAsync(User.ObjectId, User);
+        bool updateSuccessful = await userService.PutUserAsync(User.ObjectId!, User);
 
         if (updateSuccessful)
         {

@@ -23,46 +23,28 @@ namespace B2CUserAdmin.UI.Services.Users
         public Task<UserViewModel?> GetUserAsync(Guid id) =>
             _httpClient.GetFromJsonAsync<UserViewModel>($"{_usersBaseUri}?objectId={id}");
 
-        public async Task<HttpResponseMessage> PostUserAsync(UserViewModel userViewModel)
-        {
-            Dictionary<string, string> queryParameters = new()
-            {
-            };
+        public async Task<UserViewModel?> PostUserAsync(UserViewModel userViewModel) 
+        { 
+            var response = await _httpClient.PostAsJsonAsync(_usersBaseUri, userViewModel);
+            if (!response.IsSuccessStatusCode)
+                throw new Exception("User not created!");
 
-            var result = await _httpClient.PostAsJsonAsync(_usersBaseUri, queryParameters, userViewModel);
+            Console.WriteLine($"User created successfully");
+            
+            var body = await response.Content.ReadFromJsonAsync<UserViewModel>();
+            
+            if (body != null)
+                Console.WriteLine($"User id created: {body?.ObjectId}");
 
-            return result;
+            return body;
         }
 
-        public async Task<UserPatchModel> GetUserPatchAsync(Guid id)
+        public async Task<PaginatedList<UserViewModel>> GetUsersAsync(UserSearchRequestModel? userSearchQueryParameters = null, int page = 1)
         {
-            throw new NotImplementedException();
-
-            var apiResult = await GetUserAsync(id).ConfigureAwait(false);
-
-
-            //UserPatchModel patch = new();
-            //if (apiResult != null)
-            //{
-            //    apiResult.B2CObjectId = id;
-            //    patch.AccountEnabled = apiResult.AccountEnabled;
-            //    patch.DisplayName = apiResult.DisplayName;
-            //    patch.Email = apiResult.Email;
-            //    patch.GivenName = apiResult.GivenName;
-            //    patch.Surname = apiResult.Surname;
-            //    patch.TelephoneNumber = apiResult.TelephoneNumber;
-            //    patch.OrganisationId = apiResult.OrganisationId;
-            //}
-            //return patch;
-        }
-
-        public async Task<PaginatedList<UserViewModel>> GetUsersAsync(UserSearchRequestModel? userSearchQueryParameters = null, int page = 1, int pageSize = 25)
-        {
-            string queryParameters = $"?page={page}&pageSize={pageSize}";
-            queryParameters += !string.IsNullOrEmpty(userSearchQueryParameters?.Email) ? $"&emailSearch={userSearchQueryParameters?.Email}" : "";
+            string queryParameters = !string.IsNullOrEmpty(userSearchQueryParameters?.Email) ? $"?emailSearch={userSearchQueryParameters?.Email}" : "";
             var apiResult = await _httpClient.GetFromJsonAsync<IEnumerable<UserViewModel>>($"{_usersBaseUri}{queryParameters}");
 
-            PaginatedList<UserViewModel>? allUsersList = PaginatedList<UserViewModel>.Create(apiResult!.AsQueryable(), 0, 25);
+            PaginatedList<UserViewModel>? allUsersList = PaginatedList<UserViewModel>.Create(apiResult!.AsQueryable(), page, 25);
 
             return allUsersList;
         }

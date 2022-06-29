@@ -1,3 +1,4 @@
+using B2CUserAdmin.UI.Services.Users;
 using BlazorApplicationInsights;
 using Blazored.Toast;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
@@ -18,30 +19,26 @@ namespace B2CUserAdmin.UI
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
             builder.RootComponents.Add<App>("#app");
 
-            var identityServerApiClientConfiguration = builder.Configuration.GetSection("IdentityServerApiClient").Get<HttpConfiguration>();
+            var apiClientConfiguration = builder.Configuration.GetSection("ApiClient").Get<HttpConfiguration>();
 
-            builder.Services.AddHttpClient(identityServerApiClientConfiguration.Name, client => client.BaseAddress = identityServerApiClientConfiguration.BaseAddress)
+            builder.Services.AddHttpClient(apiClientConfiguration.Name, client => client.BaseAddress = apiClientConfiguration.BaseAddress)
             .AddHttpMessageHandler<BaseAddressAuthorizationMessageHandler>()
             .AddHttpMessageHandler(sp => sp.GetRequiredService<AuthorizationMessageHandler>()
             .ConfigureHandler(
-                authorizedUrls: new[] { identityServerApiClientConfiguration.BaseAddress?.ToString() }));
+                authorizedUrls: new[] { apiClientConfiguration.BaseAddress?.ToString() }));
 
-            // Supply HttpClient instances that include access tokens when making requests to the server project
-            builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient(identityServerApiClientConfiguration.Name));
+            builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient(apiClientConfiguration.Name));
 
             builder.Services.AddMsalAuthentication(options =>
             {
                 builder.Configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
-                // I'm asking for all the scopes up front. Maybe want to use ITokenProvider - _maybe_
-                options.ProviderOptions.DefaultAccessTokenScopes.AddRange(identityServerApiClientConfiguration.Scopes ?? Array.Empty<string>());
+                options.ProviderOptions.DefaultAccessTokenScopes.AddRange(apiClientConfiguration.Scopes ?? Array.Empty<string>());
             });
             builder.Services.AddBlazorApplicationInsights();
-            builder.Services.AddServices(); // custom abstraction class for added project services
+            builder.Services.AddSingleton<UserService>();
+
             builder.Services.AddBlazoredToast();
             await builder.Build().RunAsync();
         }
     }
-
-
-
 }
