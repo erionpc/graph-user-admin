@@ -22,10 +22,9 @@ namespace B2CUserAdmin.UI
             var apiClientConfiguration = builder.Configuration.GetSection("ApiClient").Get<HttpConfiguration>();
 
             builder.Services.AddHttpClient(apiClientConfiguration.Name, client => client.BaseAddress = apiClientConfiguration.BaseAddress)
-            .AddHttpMessageHandler<BaseAddressAuthorizationMessageHandler>()
-            .AddHttpMessageHandler(sp => sp.GetRequiredService<AuthorizationMessageHandler>()
-            .ConfigureHandler(
-                authorizedUrls: new[] { apiClientConfiguration.BaseAddress?.ToString() }));
+                            .AddHttpMessageHandler<BaseAddressAuthorizationMessageHandler>()
+                            .AddHttpMessageHandler(sp => sp.GetRequiredService<AuthorizationMessageHandler>()
+                            .ConfigureHandler(authorizedUrls: new[] { apiClientConfiguration.BaseAddress?.ToString() }));
 
             builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient(apiClientConfiguration.Name));
 
@@ -36,6 +35,7 @@ namespace B2CUserAdmin.UI
             });
             builder.Services.AddBlazorApplicationInsights();
             builder.Services.AddSingleton<UserService>();
+            builder.Services.AddSingleton(apiClientConfiguration);
 
             builder.Services.AddBlazoredToast();
             await builder.Build().RunAsync();
