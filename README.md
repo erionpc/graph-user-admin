@@ -28,4 +28,4 @@ Managing the AAD B2C users in the directory
 3. Log in to the UI using your B2C account. In a real scenario you would create an Enterprise application and limit the access to specific users.
 
 ## Deploy to app service
-All you will need to deploy is B2CUserAdmin.API. This will deploy the API on the root and the UI in a "wwwroot" folder. Make sure that the configuration keys are set correctly on both files the API and the UI.
+All you will need to deploy is B2CUserAdmin.API. This will deploy the API on the root and the UI in a "wwwroot" folder. Make sure that the configuration keys are set correctly on both the API and the UI.
