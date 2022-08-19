@@ -12,15 +12,17 @@ namespace B2CUserAdmin.API.Extensions
     {
         public static UserViewModel MapToUserViewModel(this User graphUser)
         {
-            if (graphUser == null)
-                return null;
-
             return new UserViewModel(
                 graphUser.Id,
                 graphUser.DisplayName,
                 graphUser.Identities?.FirstOrDefault(x => x.SignInType == Constants.SignInTypes.EmailAddress)?.IssuerAssignedId,
                 graphUser.GivenName,
                 graphUser.Surname);
+        }
+
+        public static IEnumerable<UserViewModel> MapToUserViewModel(this IEnumerable<User> graphUser)
+        {
+            return graphUser.Select(MapToUserViewModel);
         }
 
         public static void PatchFrom(this User userToUpdate, UserViewModel updatedUser)

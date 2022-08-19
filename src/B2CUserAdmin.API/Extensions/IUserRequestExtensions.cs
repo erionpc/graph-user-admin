@@ -12,9 +12,6 @@ namespace B2CUserAdmin.API.Extensions
     {
         public static IUserRequest SelectUserFields(this IUserRequest request)
         {
-            if (request == null)
-                return null;
-
             return request.Select(e => new
             {
                 e.Id,

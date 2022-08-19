@@ -26,7 +26,7 @@
     </div>
 </div>
 
-@if (usersPagedList == null)
+@if (users == null)
 {
     <Loading />
 }
@@ -47,7 +47,7 @@ else
             </thead>
             <tbody>
 
-                @foreach (var user in usersPagedList)
+                @foreach (var user in users)
                 {
                     <tr>
                         <td><NavLink href="@GetUserUrl(user.ObjectId!)">@user.DisplayName</NavLink></td>
@@ -62,32 +62,19 @@ else
                  }
             </tbody>
         </table>
-
-        @{var prevDisabled = !usersPagedList.HasPreviousPage ? "disabled" : "";
-            var nextDisabled = !usersPagedList.HasNextPage ? "disabled" : "";
-        }
-
-        <a asp-page="./Index"
-           @onclick="PreviousPage"
-           asp-route-pageIndex="@(usersPagedList.PageIndex - 1)"
-           class="btn btn-default @prevDisabled">
-            Previous
-        </a>
-        <a asp-page="./Index"
-           @onclick="NextPage"
-           asp-route-pageIndex="@(usersPagedList.PageIndex + 1)"
-           class="btn btn-default @nextDisabled">
-            Next
-        </a>
-
     </div>
+    <Pagination GetNextLink="@LoadUsersAsync" BaseUri="@userService.UsersBaseUri" PageSize="@PageSize" />
 }
 
 @code {
-    [Parameter] public string? EmailFilter { get => userSearchRequest.Email; set => userSearchRequest.Email = value; }
-    [Parameter] public int? PageIndex { get; set; }
+    
+    public int PageSize => 20;
 
-    private PaginatedList<UserViewModel>? usersPagedList;
+    public bool LoadingPagedData { get; set; }
+
+    private IList<UserViewModel>? users;
+
+    public Dictionary<int, string> PageLinks { get; set; } = new();
 
     private UserSearchRequestModel userSearchRequest { get; set; } = new();
 
@@ -105,40 +92,27 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await GetUserListAsync();
+        await LoadUsersAsync();
     }
 
-    private async Task NextPage()
-    {
-        await GetUserListAsync((usersPagedList?.PageIndex ?? 0 + 1));
-    }
-
-    private async Task PreviousPage()
-    {
-        await GetUserListAsync((usersPagedList?.PageIndex ?? 2 - 1));
-    }
-
-    private async Task GetUserListAsync(int page = 1)
+    private async Task<string?> LoadUsersAsync(string? url = null)
     {
         try
         {
-            usersPagedList = await userService.GetUsersAsync(userSearchRequest, page);
+            userSearchRequest.PageSize = PageSize;
+            var apiResponse = url == null ? 
+                await userService.GetUsersAsync(userSearchRequest) : 
+                await userService.GetUsersAsync(url);
+
+            users = apiResponse.Body;
+            StateHasChanged();
+
+            return apiResponse.NextPageLink;
         }
         catch (AccessTokenNotAvailableException exception)
         {
             exception.Redirect();
-        }
-    }
-
-    public async Task OnGetAsync(int? pageIndex)
-    {
-        if (!pageIndex.HasValue)
-        {
-            await GetUserListAsync();
-        }
-        else
-        {
-            await GetUserListAsync(pageIndex.Value);
+            return null;
         }
     }
 
@@ -157,7 +131,7 @@ else
 
         if (deleted)
         {
-            bool? success = usersPagedList?.Remove(user);
+            bool? success = users?.Remove(user);
 
             if (success.HasValue && success.Value)
                 toastService.ShowSuccess("User deleted");
@@ -166,7 +140,7 @@ else
 
     private async Task SearchUsersAsync()
     {
-        await GetUserListAsync();
+        await LoadUsersAsync();
         showClearSearchButton = !string.IsNullOrWhiteSpace(userSearchRequest.Email);
     }
 
@@ -174,6 +148,6 @@ else
     {
         showClearSearchButton = false;
         userSearchRequest.Email = string.Empty;
-        await GetUserListAsync();
+        await LoadUsersAsync();
     }
 }

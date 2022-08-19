@@ -32,7 +32,7 @@ namespace B2CUserAdmin.API
 
         public IConfiguration Configuration { get; }
 
-        private AuthenticationConfig authenticationOptions;
+        private AuthenticationConfig authenticationOptions = new();
 
         public void ConfigureServices(IServiceCollection services)
         {

@@ -9,6 +9,8 @@ using Microsoft.Extensions.Logging;
 using B2CUserAdmin.API.Abstractions;
 using B2CUserAdmin.Shared.Users;
 using B2CUserAdmin.API.Exceptions;
+using B2CUserAdmin.Shared.Paging;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace B2CUserAdmin.API.Controllers
 {
@@ -26,34 +28,19 @@ namespace B2CUserAdmin.API.Controllers
         }
 
         [HttpGet]
+        [SwaggerOperation(summary: "Return paginated users list.")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<IEnumerable<UserViewModel>>> GetUsers(Guid? objectId = null, string emailSearch = null)
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<PaginatedResponse<IEnumerable<UserViewModel>>>> GetUsers([FromQuery] UserSearchRequestModel? searchRequest)
         {
             try
-            { 
-                if (objectId.HasValue)
-                {
-                    var user = await UserService.GetByObjectIdAsync(objectId.Value);
-                    if (user is null) 
-                        return NotFound();
-
-                    return Ok(user);
-                }
-
-                if (emailSearch is null)
-                {
-                    var users = await UserService.GetAllAsync();
-
-                    return Ok(users);
-                }
-                else
-                {
-                    var users = await UserService.GetByEmailAsync(emailSearch);
-
-                    return Ok(users);
-                }
+            {
+                var users = await UserService.GetAsync(searchRequest);
+                if (users is null) 
+                    return NotFound();
+                
+                return Ok(users);
             }
             catch (Exception ex)
             {
@@ -62,10 +49,32 @@ namespace B2CUserAdmin.API.Controllers
             }
         }
 
+        [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<UserViewModel>> GetUser([FromRoute] Guid id)
+        {
+            try
+            {
+                var user = await UserService.GetByObjectIdAsync(id);
+                if (user is null)
+                    return NotFound();
+
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "An error occurred while getting the user");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
         [HttpPost()]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<UserViewModel>> NewUser(UserViewModel user)
         {
             try
@@ -84,6 +93,7 @@ namespace B2CUserAdmin.API.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> PutUser(UserViewModel user)
         {
             try
@@ -108,6 +118,7 @@ namespace B2CUserAdmin.API.Controllers
         [HttpDelete("{objectId}")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteUser(string objectId)
         {
             try
@@ -123,7 +134,7 @@ namespace B2CUserAdmin.API.Controllers
             catch (Exception e)
             {
                 Logger.LogError(e, "Error occurred while deleting user");
-                return BadRequest();
+                return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }
     }

@@ -1,8 +1,22 @@
-﻿<p class="text-center fs-5 fw-bold">Loading...</p>
-<div class="d-flex justify-content-center align-middle">
+﻿@if (ShowTitle)
+{
+    <p class="text-center fs-5 fw-bold">Loading...</p>
+}
+@if (Centered)
+{
+    <div class="d-flex justify-content-center align-middle">
+        <div class="spinner-border text-success" style="width: 3rem; height: 3rem;" role="status" aria-hidden="true"></div>
+    </div>
+}
+else
+{
     <div class="spinner-border text-success" style="width: 3rem; height: 3rem;" role="status" aria-hidden="true"></div>
-</div>
+}
 
 @code {
+    [Parameter]
+    public bool ShowTitle { get; set; } = true;
 
+    [Parameter]
+    public bool Centered { get; set; } = true;
 }

@@ -42,7 +42,7 @@ namespace B2CUserAdmin.API
 
                         Implicit = new OpenApiOAuthFlow
                         {
-                            AuthorizationUrl = new Uri(authenticationOptions.AuthorizationUrl),
+                            AuthorizationUrl = new Uri(authenticationOptions.AuthorizationUrl!),
                             Scopes = Constants.DelegatedPermissions.All.ToDictionary(p =>
                                 $"{authenticationOptions.ApplicationIdUri}/{p}")
                         }
@@ -62,7 +62,7 @@ namespace B2CUserAdmin.API
 
         public OAuthSecurityRequirementOperationFilter(IOptions<AuthenticationConfig> authenticationConfig)
         {
-            _appIdUri = authenticationConfig.Value.ApplicationIdUri;
+            _appIdUri = authenticationConfig.Value.ApplicationIdUri!;
         }
 
         public void Apply(OpenApiOperation operation, OperationFilterContext context)

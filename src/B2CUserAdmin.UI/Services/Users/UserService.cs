@@ -7,6 +7,8 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using B2CUserAdmin.Shared.Paging;
 using B2CUserAdmin.Shared.Users;
+using B2CUserAdmin.UI.Extensions;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace B2CUserAdmin.UI.Services.Users
 {
@@ -20,8 +22,10 @@ namespace B2CUserAdmin.UI.Services.Users
             _httpClient = httpClientFactory.CreateClient("B2CUserAdmin.API");
         }
 
+        public string UsersBaseUri => _usersBaseUri;
+
         public Task<UserViewModel?> GetUserAsync(Guid id) =>
-            _httpClient.GetFromJsonAsync<UserViewModel>($"{_usersBaseUri}?objectId={id}");
+            _httpClient.GetFromJsonAsync<UserViewModel>($"{_usersBaseUri}/{id}");
 
         public async Task<UserViewModel?> PostUserAsync(UserViewModel userViewModel) 
         { 
@@ -39,14 +43,32 @@ namespace B2CUserAdmin.UI.Services.Users
             return body;
         }
 
-        public async Task<PaginatedList<UserViewModel>> GetUsersAsync(UserSearchRequestModel? userSearchQueryParameters = null, int page = 1)
+        public async Task<PaginatedResponse<IList<UserViewModel>>> GetUsersAsync(UserSearchRequestModel? userSearchQueryParameters = null)
         {
-            string queryParameters = !string.IsNullOrEmpty(userSearchQueryParameters?.Email) ? $"?emailSearch={userSearchQueryParameters?.Email}" : "";
-            var apiResult = await _httpClient.GetFromJsonAsync<IEnumerable<UserViewModel>>($"{_usersBaseUri}{queryParameters}");
+            userSearchQueryParameters ??= new();
 
-            PaginatedList<UserViewModel>? allUsersList = PaginatedList<UserViewModel>.Create(apiResult!.AsQueryable(), page, 25);
+            Dictionary<string, string> queryParameters = userSearchQueryParameters.ToDictionary();
 
-            return allUsersList;
+            var apiResult = await _httpClient.GetFromJsonAsync<PaginatedResponse<IList<UserViewModel>>>($"{_usersBaseUri}", queryParameters);
+
+            return apiResult ?? new PaginatedResponse<IList<UserViewModel>>();
+        }
+
+        public async Task<PaginatedResponse<IList<UserViewModel>>> GetUsersAsync(string graphUrl)
+        {
+            if (!graphUrl.Contains('?'))
+            {
+                return await GetUsersAsync(new UserSearchRequestModel());
+            }
+
+            string usersGraphQuery = graphUrl.Split('?')[1];
+            var queryParameters = QueryHelpers.ParseQuery(usersGraphQuery).ToDictionary(x => x.Key, x => x.Value.FirstOrDefault());
+            UserSearchRequestModel searchModel = new(queryParameters);
+            var apiQueryParameters = searchModel.ToDictionary();
+
+            var apiResult = await _httpClient.GetFromJsonAsync<PaginatedResponse<IList<UserViewModel>>>(_usersBaseUri, apiQueryParameters!);
+
+            return apiResult ?? new PaginatedResponse<IList<UserViewModel>>();
         }
 
         public async Task<bool> DeleteUserAsync(string userId)

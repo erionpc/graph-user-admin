@@ -12,9 +12,6 @@ namespace B2CUserAdmin.API.Extensions
     {
         public static IEnumerable<UserViewModel> MapToUserViewModelCollection(this IGraphServiceUsersCollectionPage graphUsers)
         {
-            if (graphUsers == null)
-                return null;
-
             return graphUsers.Select(x => x.MapToUserViewModel());
         }
     }

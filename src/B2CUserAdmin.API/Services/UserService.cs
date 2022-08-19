@@ -2,6 +2,7 @@
 using B2CUserAdmin.API.Exceptions;
 using B2CUserAdmin.API.Extensions;
 using B2CUserAdmin.API.Models;
+using B2CUserAdmin.Shared.Paging;
 using B2CUserAdmin.Shared.Users;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
@@ -10,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static B2CUserAdmin.Shared.Constants;
 
 namespace B2CUserAdmin.API.Services
 {
@@ -19,30 +21,38 @@ namespace B2CUserAdmin.API.Services
         {
         }
 
-        public async Task<IEnumerable<UserViewModel>> GetAllAsync()
+        public async Task<PaginatedResponse<IEnumerable<UserViewModel>>> GetAsync(UserSearchRequestModel? searchRequest)
         {
-            var result = await GraphClient.Users
-                .Request()
-                .SelectUserFields()
-                .GetAsync();
+            var query = BuildUsersQuery(searchRequest);
+            var result = await query.GetResponseAsync();
+            var responseObject = await result.GetResponseObjectAsync();
 
-            // Todo: Implement paging
-
-            return result.MapToUserViewModelCollection();
+            return responseObject.MapToPaginatedResponse();
         }
 
-        public async Task<IEnumerable<UserViewModel>> GetByEmailAsync(string emailSearch)
+        private IGraphServiceUsersCollectionRequest BuildUsersQuery(UserSearchRequestModel? searchRequest)
         {
-            var result = await GraphClient.Users
-                .Request()
-                .Filter($"identities/any(c:c/issuerAssignedId eq '{emailSearch}' and c/issuer eq '{AppSettings.TenantName}')")
-                .SelectUserFields()
-                .GetAsync();
+            var query = GraphClient.Users.Request();
 
-            return result.MapToUserViewModelCollection();
+            if (searchRequest == null)
+                return query;
+
+            if (searchRequest.PageSize.HasValue)
+                query = query.Top(searchRequest.PageSize.Value);
+
+            query = query.SelectUserFields();
+            
+            // Cannot do complex queries against identities on MsGraph (Request_UnsupportedQuery: Complex query on property identities is not supported.)
+            if (!string.IsNullOrWhiteSpace(searchRequest.Email))
+                query = query.FilterByEmail(searchRequest.Email, AppSettings.TenantName!);
+
+            if (!string.IsNullOrWhiteSpace(searchRequest.PagingToken))
+                query.QueryOptions.Add(new QueryOption("$" + GraphConstants.SkipToken, searchRequest.PagingToken));
+
+            return query;
         }
 
-        public async Task<UserViewModel> GetByObjectIdAsync(Guid objectId)
+        public async Task<UserViewModel?> GetByObjectIdAsync(Guid objectId)
         {
             var result = await GraphClient.Users[objectId.ToString()]
                 .Request()
@@ -60,7 +70,7 @@ namespace B2CUserAdmin.API.Services
 
         public async Task UpdateAsync(UserViewModel updatedUser)
         {
-            var existingB2CUser = await GraphClient.Users[updatedUser.ObjectId.ToString()]
+            var existingB2CUser = await GraphClient.Users[updatedUser.ObjectId!.ToString()]
                 .Request()
                 .SelectUserFields()
                 .GetAsync();
@@ -105,7 +115,7 @@ namespace B2CUserAdmin.API.Services
         {
             string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"£$%^&*()<>?:@~#";
 
-            Random random = new Random();
+            Random random = new();
 
             string generated = "!";
             for (int i = 1; i <= length; i++)
