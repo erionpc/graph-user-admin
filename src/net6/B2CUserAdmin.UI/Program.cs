@@ -31,7 +31,7 @@ namespace B2CUserAdmin.UI
             builder.Services.AddMsalAuthentication(options =>
             {
                 builder.Configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
-                options.ProviderOptions.DefaultAccessTokenScopes.AddRange(apiClientConfiguration.Scopes ?? Array.Empty<string>());
+                options.ProviderOptions.DefaultAccessTokenScopes.AddRange(apiClientConfiguration.Scopes ?? []);
             });
             builder.Services.AddBlazorApplicationInsights();
             builder.Services.AddSingleton<UserService>();

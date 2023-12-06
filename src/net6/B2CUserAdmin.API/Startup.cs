@@ -91,7 +91,7 @@ namespace B2CUserAdmin.API
             {
                 if (context.Request.Headers.TryGetValue("X-Forwarded-Host", out var originatingHost))
                 {
-                    context.Request.Host = new HostString(originatingHost);
+                    context.Request.Host = new HostString(originatingHost!);
                 }
                 await next();
             });
