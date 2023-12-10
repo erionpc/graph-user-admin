@@ -20,12 +20,12 @@ namespace GraphUserAdmin.API.Extensions
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Version = "v1",
-                    Title = "AAD B2C Admin API",
-                    Description = "Web API for managing AAD B2C",
+                    Title = "Graph User Admin API by erionpc",
+                    Description = "Web API for managing Graph users",
                     TermsOfService = new Uri("https://example.com/terms"),
                     Contact = new OpenApiContact
                     {
-                        Name = "Erion Pici",
+                        Name = "ERIONPC",
                         Email = "erionpc@gmail.com",
                         Url = new Uri("https://erionpc.wordpress.com"),
                     },
@@ -40,7 +40,6 @@ namespace GraphUserAdmin.API.Extensions
                     Type = SecuritySchemeType.OAuth2,
                     Flows = new OpenApiOAuthFlows
                     {
-
                         Implicit = new OpenApiOAuthFlow
                         {
                             AuthorizationUrl = new Uri(authenticationOptions.AuthorizationUrl!),
@@ -67,8 +66,6 @@ namespace GraphUserAdmin.API.Extensions
 
         public void Apply(OpenApiOperation operation, OperationFilterContext context)
         {
-            // Get custom attributes on action and controller
-
             operation.Security.Add(new OpenApiSecurityRequirement
             {
                 {

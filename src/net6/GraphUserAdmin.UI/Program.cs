@@ -30,7 +30,7 @@ namespace GraphUserAdmin.UI
 
             builder.Services.AddMsalAuthentication(options =>
             {
-                builder.Configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
+                builder.Configuration.Bind("TenantConfig", options.ProviderOptions.Authentication);
                 options.ProviderOptions.DefaultAccessTokenScopes.AddRange(apiClientConfiguration.Scopes ?? []);
             });
             builder.Services.AddBlazorApplicationInsights();

@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Http;
 using GraphUserAdmin.API.Abstractions;
 using GraphUserAdmin.API.Services;
 using GraphUserAdmin.API.Models;
+using GraphUserAdmin.API.Extensions;
 
 namespace GraphUserAdmin.API
 {
@@ -67,7 +68,7 @@ namespace GraphUserAdmin.API
             {
                 app.UseSwaggerUI(o =>
                 {
-                    o.SwaggerEndpoint("/swagger/v1/swagger.json", "AAD B2C Admin API");
+                    o.SwaggerEndpoint("/swagger/v1/swagger.json", "Graph Users Admin API");
                     o.OAuthClientId(authenticationOptions.ClientId);
                     o.DefaultModelRendering(Swashbuckle.AspNetCore.SwaggerUI.ModelRendering.Example);
                     o.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);

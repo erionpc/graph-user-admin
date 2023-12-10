@@ -25,7 +25,7 @@ namespace GraphUserAdmin.API.Extensions
                     TermsOfService = new Uri("https://example.com/terms"),
                     Contact = new OpenApiContact
                     {
-                        Name = "Erion Pici",
+                        Name = "ERIONPC",
                         Email = "erionpc@gmail.com",
                         Url = new Uri("https://erionpc.wordpress.com"),
                     },

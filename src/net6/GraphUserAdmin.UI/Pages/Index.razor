@@ -6,12 +6,8 @@
 
 <AuthorizeView>
     <Authorized>
-        <h2>AAD B2C User Management</h2>
-        <div>This tool allows you to manage the users in your B2C directory:</div>
-        @if (configuration?.Scopes?.FirstOrDefault()?.Split('/') != null)
-        {
-            <p>@configuration?.Scopes?.FirstOrDefault()?.Split('/')!.Take(3).Last()</p>
-        }
+        <h2>Graph User Management</h2>
+        <div>This tool allows you to manage the users in your directory</div>
     </Authorized>
     <NotAuthorized>
         @if (!context.User.Identity!.IsAuthenticated)

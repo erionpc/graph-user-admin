@@ -70,17 +70,17 @@ namespace GraphUserAdmin.API.Services
 
         public async Task UpdateAsync(UserViewModel updatedUser)
         {
-            var existingB2CUser = await GraphClient.Users[updatedUser.ObjectId!.ToString()]
+            var existingUser = await GraphClient.Users[updatedUser.ObjectId!.ToString()]
                 .Request()
                 .SelectUserFields()
                 .GetAsync();
 
-            if (existingB2CUser == null)
+            if (existingUser == null)
                 throw new UserNotFoundException();
 
-            existingB2CUser.PatchFrom(updatedUser);
+            existingUser.PatchFrom(updatedUser);
 
-            await GraphClient.Users[existingB2CUser.Id].Request().UpdateAsync(existingB2CUser);
+            await GraphClient.Users[existingUser.Id].Request().UpdateAsync(existingUser);
         }
 
         public async Task<UserViewModel> CreateAsync(UserViewModel user)
