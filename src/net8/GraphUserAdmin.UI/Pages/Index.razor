@@ -1,0 +1,19 @@
+﻿@page "/"
+@attribute [AllowAnonymous]
+@using Microsoft.AspNetCore.Authorization;
+@using GraphUserAdmin.UI;
+@using GraphUserAdmin.UI.Configuration;
+@inject AppConfiguration configuration;
+
+<AuthorizeView>
+    <Authorized>
+        <h2>Graph User Management</h2>
+        <div>This tool allows you to manage the users in your directory</div>
+    </Authorized>
+    <NotAuthorized>
+        @if (!context.User.Identity!.IsAuthenticated)
+        {
+            <RedirectToLogin />
+        }
+    </NotAuthorized>
+</AuthorizeView>

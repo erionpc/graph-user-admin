@@ -1,0 +1,153 @@
+﻿@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using GraphUserAdmin.Shared.Users
+@using GraphUserAdmin.Shared.Paging
+@using GraphUserAdmin.UI.Services.Users
+
+@inject IToastService toastService
+@inject UserService userService
+@inject IJSRuntime JSRuntime
+
+<div class="row g-3 mb-3 mt-0 align-items-end">
+
+    <div class="col-3">
+        <input placeholder="Email" @bind-value="userSearchRequest.Email" class="form-control">
+    </div>
+    <div class="col-auto">
+        <div class="d-inline">
+            <button class="btn btn-primary" @onclick="SearchUsersAsync">Search</button>
+        </div>
+
+        @if (showClearSearchButton)
+        {
+            <div class="d-inline" style="margin-left:2rem;">
+                <button class="btn btn-secondary" @onclick="ClearSearchAsync">Clear</button>
+            </div>
+        }
+    </div>
+</div>
+
+@if (users == null)
+{
+    <Loading />
+}
+else
+{
+    <div class="table-responsive">
+
+        <table class="table table-sm table-striped table-hover caption-top">
+            <caption>List of users</caption>
+            <thead>
+                <tr>
+                    <th>Display name</th>
+                    <th>Name</th>
+                    <th>Surname</th>
+                    <th>Email</th>
+                    <th class="align-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var user in users)
+                {
+                    <tr>
+                        <td><NavLink href="@GetUserUrl(user.ObjectId!)">@user.DisplayName</NavLink></td>
+                        <td>@user.FirstName</td>
+                        <td>@user.LastName</td>
+                        <td>@user.Email</td>
+                        <td class="align-right">
+                            <NavLink class="btn btn-sm btn-warning" href="@GetUserEditUrl(user.ObjectId!)"><span class="fa fa-pencil-square-o"></span></NavLink>
+                            <DeleteUserButton User="user" OnUserDeleted=@DeleteUserAsync></DeleteUserButton>
+                        </td>
+                    </tr>
+                 }
+            </tbody>
+        </table>
+    </div>
+    <Pagination GetNextLink="@LoadUsersAsync" BaseUri="@userService.UsersBaseUri" PageSize="@PageSize" />
+}
+
+@code {
+    
+    public int PageSize => 5;
+
+    public bool LoadingPagedData { get; set; }
+
+    private IList<UserViewModel>? users;
+
+    public Dictionary<int, string> PageLinks { get; set; } = new();
+
+    private UserSearchRequestModel userSearchRequest { get; set; } = new();
+
+    private bool showClearSearchButton;
+
+    protected string GetUserUrl(string Id)
+    {
+        return $"/users/{Id}";
+    }
+
+    protected string GetUserEditUrl(string Id)
+    {
+        return $"{GetUserUrl(Id)}/edit";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsersAsync();
+    }
+
+    private async Task<string?> LoadUsersAsync(string? url = null)
+    {
+        try
+        {
+            userSearchRequest.PageSize = PageSize;
+            var apiResponse = url == null ? 
+                await userService.GetUsersAsync(userSearchRequest) : 
+                await userService.GetUsersAsync(url);
+
+            users = apiResponse.Body;
+            StateHasChanged();
+
+            return apiResponse.NextPageLink;
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+            return null;
+        }
+    }
+
+    private async Task DeleteUserAsync(UserViewModel user)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete {user.DisplayName}?");
+        if (confirmed)
+        {
+            await DeletedUserCallback(user).ConfigureAwait(false);
+        }
+    }
+
+    private async Task DeletedUserCallback(UserViewModel user)
+    {
+        bool deleted = await userService.DeleteUserAsync(user.ObjectId!);
+
+        if (deleted)
+        {
+            bool? success = users?.Remove(user);
+
+            if (success.HasValue && success.Value)
+                toastService.ShowSuccess("User deleted");
+        }
+    }
+
+    private async Task SearchUsersAsync()
+    {
+        await LoadUsersAsync();
+        showClearSearchButton = !string.IsNullOrWhiteSpace(userSearchRequest.Email);
+    }
+
+    private async Task ClearSearchAsync()
+    {
+        showClearSearchButton = false;
+        userSearchRequest.Email = string.Empty;
+        await LoadUsersAsync();
+    }
+}

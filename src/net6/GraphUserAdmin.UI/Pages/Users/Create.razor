@@ -1,0 +1,78 @@
+﻿@page "/users/Create"
+@using System.ComponentModel.DataAnnotations
+@using GraphUserAdmin.Shared.Users
+@using GraphUserAdmin.UI.Services.Users
+
+@inject IJSRuntime JSRuntime
+@inject UserService UserService
+@inject NavigationManager Navigation
+@inject IToastService toastService
+
+<h1>New user details</h1>
+
+<div>
+    <EditForm Model="_userRequestModel" OnValidSubmit="@CreateUserAsync">
+        <DataAnnotationsValidator />
+
+        <div class="form-group">
+            <label class="control-label col-md-2">Email</label>
+            <div class="col-md-3">
+                <InputText class="form-control" @bind-Value="_userRequestModel.Email" />
+                <ValidationMessage For="(() => _userRequestModel.Email)" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2">Display name</label>
+            <div class="col-md-3">
+                <InputText class="form-control" @bind-Value="_userRequestModel.DisplayName" />
+                <ValidationMessage For="(() => _userRequestModel.DisplayName)" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2">First name</label>
+            <div class="col-md-3">
+                <InputText class="form-control" @bind-Value="_userRequestModel.FirstName" />
+                <ValidationMessage For="(() => _userRequestModel.FirstName)" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2">Last name</label>
+            <div class="col-md-3">
+                <InputText class="form-control" @bind-Value="_userRequestModel.LastName" />
+                <ValidationMessage For="(() => _userRequestModel.LastName)" />
+            </div>
+        </div>
+        
+        <button class="btn btn-primary" type="submit" disabled="@(!context.Validate() || !context.IsModified())">Create User</button>
+
+    </EditForm>
+</div>
+
+
+@code {
+
+    private UserViewModel _userRequestModel = new UserViewModel()
+    {
+        
+    };
+
+    private async Task CreateUserAsync()
+    {
+        try
+        {
+            var user = await UserService.PostUserAsync(_userRequestModel);
+            if (user != null)
+            {
+                toastService.ShowSuccess($"User {user.ObjectId} created");
+                Navigation.NavigateTo($"/users");
+            }
+        }
+        catch (Exception)
+        {
+            toastService.ShowError($"User not created!");
+        }
+    }
+}

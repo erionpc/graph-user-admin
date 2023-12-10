@@ -1,0 +1,26 @@
+@inherits LayoutComponentBase
+@using Blazored.Toast.Configuration
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <div class="main">
+        <div class="top-row px-4 auth">
+            @*<LoginDisplay />*@
+            @*<a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>*@
+        </div>
+
+        <BlazoredToasts Position="ToastPosition.TopRight"
+                        Timeout="3"
+                        IconType="IconType.FontAwesome"
+                        SuccessClass="success-toast-override"
+                        SuccessIcon="fa fa-thumbs-up"
+                        ErrorIcon="fa fa-bug" />
+
+        <div class="content px-4">
+            @Body
+        </div>
+    </div>
+</div>
