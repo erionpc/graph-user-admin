@@ -1,0 +1,100 @@
+﻿@using GraphUserAdmin.UI.Extensions
+@using Palit.AspNetCore.JsonPatch.Extensions.Generate
+@using GraphUserAdmin.Shared.Users
+@using GraphUserAdmin.UI.Services.Users
+
+@inject UserService userService
+@inject NavigationManager NavMan
+@inject IToastService toastService
+
+@if (User == null)
+{
+    <Loading />
+}
+else
+{
+    <div>
+        <EditForm Model="User" OnValidSubmit="@UpdateUser">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <label class="control-label col-md-2">Display name</label>
+                <div class="col-md-3">
+                    <InputText class="form-control" @bind-Value="User.DisplayName" />
+                    <ValidationMessage For="(() => User.DisplayName)" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-md-2">Email</label>
+                <div class="col-md-3">
+                    <InputText class="form-control" @bind-Value="User.Email" />
+                    <ValidationMessage For="(() => User.Email)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label col-md-2">Given name</label>
+                <div class="col-md-3">
+                    <InputText class="form-control" @bind-Value="User.FirstName" />
+                    <ValidationMessage For="(() => User.FirstName)" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label col-md-2">Family name</label>
+                <div class="col-md-3">
+                    <InputText class="form-control" @bind-Value="User.LastName" />
+                    <ValidationMessage For="(() => User.LastName)" />
+                </div>
+            </div>
+
+            <br />
+            <div class="form-group">
+                <button class="btn btn-secondary ml-5" @onclick="@(async () => await OnFormCancelled.InvokeAsync())">
+                    <i class="fa fa-arrow-circle-left" aria-hidden="true"></i> Back to users
+                </button>
+
+                @* if the form is invalid, the submit is disabled *@
+                <button class="btn btn-primary" type="submit" disabled="@(!context.Validate())"><span class="fa fa-save"></span> Save</button>
+            </div>
+            <br />
+        </EditForm>
+</div>
+
+}
+@code {
+
+    [Parameter] 
+    public Guid Id { get; set; }    
+
+    [Parameter]
+    public UserViewModel User
+    {
+        get { return user ?? new UserViewModel(); }
+        set
+        {
+            user = value;
+            if (OriginalUser == null && user != null)
+            {
+                OriginalUser = user.Clone(); // Keep a back up so we can compare and track any changes.
+            }
+        }
+    }
+
+    [Parameter]
+    public EventCallback OnFormCancelled { get; set; }
+
+    public UserViewModel? OriginalUser { get; set; }
+    private UserViewModel? user { get; set; }
+
+    private async Task UpdateUser()
+    {
+        bool updateSuccessful = await userService.PutUserAsync(User.ObjectId!, User);
+
+        if (updateSuccessful)
+        {
+            NavMan.NavigateTo($"/users");
+            toastService.ShowSuccess("User updated!");
+        }
+    }
+}

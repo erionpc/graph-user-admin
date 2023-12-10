@@ -1,0 +1,165 @@
+﻿@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+@if (PageLinks.Count > 1)
+{
+    <nav class="mb-5 mt-2" aria-label="Page navigation">
+        
+        @if (LoadingPagedData)
+        {
+            <Loading ShowTitle="false" Centered="false" />
+        }
+        else 
+        {
+            <ul class="pagination">
+                @if (PreviousPageLink != null)
+                {
+                    <li class="page-item">
+                        <NavLink class="page-link" role="button" @onclick="GoToPreviousPage">&laquo;</NavLink>
+                    </li>
+                }
+                @foreach (var pg in PageLinks)
+                {
+                    @if (pg.Key == CurrentPageLink.Key)
+                    {
+                        <li class="page-item active">
+                            <span class="page-link">@pg.Key
+                                <span class="sr-only">(current)</span>
+                            </span>
+                        </li>
+                    }
+                    else
+                    {
+                        <NavLink class="page-link" role="button" @onclick="(async () => await GoToPageNumber(pg.Key))">
+                            @pg.Key
+                            @if (NextPageLink != null && !PageLinks!.ContainsKey(pg.Key + 1) && !LastPageReached)
+                            {
+                                <span> ...</span>
+                            }
+                        </NavLink>
+                    }
+                }
+                @if (NextPageLink != null)
+                {
+                    <li class="page-item">
+                        <NavLink class="page-link" role="button" @onclick="GoToNextPage">&raquo;</NavLink>
+                    </li>
+                }
+            </ul>
+        }
+    </nav>
+}
+
+@code {
+    [Parameter]
+    public Func<string?, Task<string?>>? GetNextLink { get; set; }
+
+    [Parameter]
+    public EventCallback OnAfterPageChanged { get; set; }
+
+    [Parameter]
+    public string? BaseUri { get; set; }
+
+    [Parameter]
+    public int PageSize { get; set; }
+
+    public Dictionary<int, string> PageLinks { get; set; } = new();
+
+    public KeyValuePair<int, string> CurrentPageLink { get; set; } = new(1, "");
+
+    public KeyValuePair<int, string>? NextPageLink
+    {
+        get
+        {
+            if (!PageLinks.Any()
+                || !PageLinks!.ContainsKey(CurrentPageLink.Key + 1))
+            {
+                LastPageReached = true;
+                return null;
+            }
+
+            return PageLinks.First(x => x.Key == CurrentPageLink.Key + 1);
+        }
+    }
+
+    public KeyValuePair<int, string>? PreviousPageLink
+    {
+        get
+        {
+            if (!PageLinks.Any()
+                || !PageLinks!.ContainsKey(CurrentPageLink.Key - 1))
+            {
+                return null;
+            }
+
+            return PageLinks.First(x => x.Key == CurrentPageLink.Key - 1);
+        }
+    }
+
+    public bool LoadingPagedData { get; set; }
+
+    private bool LastPageReached { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ResetPagination();
+
+        string? nextPageLink = await GetNextLink!.Invoke(null);
+
+        PageLinks.Add(1, $"{BaseUri}?$top={PageSize}");
+
+        if (!string.IsNullOrWhiteSpace(nextPageLink))
+        {
+            PageLinks.Add(2, nextPageLink);
+        }
+
+        _ = Task.Run(async () => await OnAfterPageChanged.InvokeAsync());
+    }
+
+    private void ResetPagination()
+    {
+        PageLinks.Clear();
+        CurrentPageLink = new(1, "");
+        LoadingPagedData = false;
+        LastPageReached = false;
+    }
+
+    private async Task ChangePage(KeyValuePair<int, string> pageLink)
+    {
+        try
+        {
+            LoadingPagedData = true;
+
+            var nextPageLink = await GetNextLink!.Invoke(pageLink.Value);
+
+            CurrentPageLink = pageLink;
+
+            if (!string.IsNullOrWhiteSpace(nextPageLink))
+            {
+                PageLinks[CurrentPageLink.Key + 1] = nextPageLink;
+            }
+
+            LoadingPagedData = false;
+
+            _ = Task.Run(async () => await OnAfterPageChanged.InvokeAsync());
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            LoadingPagedData = false;
+            exception.Redirect();
+        }
+        catch (Exception ex)
+        {
+            LoadingPagedData = false;
+            Console.WriteLine(ex);
+        }
+    }
+
+    protected Task GoToPreviousPage() =>
+        ChangePage(PreviousPageLink!.Value);
+
+    protected Task GoToNextPage() =>
+        ChangePage(NextPageLink!.Value);
+
+    protected Task GoToPageNumber(int pageNumber) =>
+        ChangePage(PageLinks.Single(x => x.Key == pageNumber));
+}

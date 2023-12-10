@@ -1,0 +1,80 @@
+﻿@page "/users/{userId:guid}"
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using GraphUserAdmin.Shared.Users
+@using GraphUserAdmin.UI.Services.Users
+
+@inject UserService userService
+
+<h1>User details</h1>
+
+@if (user == null)
+{
+    <Loading />
+}
+else
+{
+    <div class="row g-3 mb-3">
+        <div class="col-6">
+            <div class="form-floating">
+                <input readonly disabled @bind-value="user.DisplayName" class="form-control form-control-plaintext">
+                <label>Display Name</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6">
+            <div class="form-floating">
+                <input readonly disabled @bind-value="user.Email" class="form-control form-control-plaintext">
+                <label>Email address</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6">
+            <div class="form-floating">
+                <input readonly disabled @bind-value="user.FirstName" class="form-control form-control-plaintext">
+                <label>Given name</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6">
+            <div class="form-floating">
+                <input readonly disabled @bind-value="user.LastName" class="form-control form-control-plaintext">
+                <label>Family name</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-10">
+        <NavLink class="btn btn-secondary" href="/users"><i class="fa fa-arrow-circle-left" aria-hidden="true"></i> Back to users</NavLink>
+        <NavLink class="btn btn-warning ml-5" href="@UserEditUrl"><span class="fa fa-pencil-square-o"></span> Edit user</NavLink>
+    </div>
+    <hr />
+}
+
+@code {
+    [Parameter]
+    public Guid UserId { get; set; }
+
+    private UserViewModel? user { get; set; }
+
+    private string UserUrl => $"/users/{UserId}";
+
+    private string UserEditUrl => $"{UserUrl}/edit";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            user = await userService.GetUserAsync(UserId);
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+}

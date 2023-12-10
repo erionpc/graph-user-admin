@@ -1,0 +1,47 @@
+﻿<div class="top-row pl-4 pt-3 navbar-dark text-center">
+    <AuthorizeView>
+        <Authorized>
+            <a class="navbar-brand" href="">Graph Users Admin</a>
+            <button class="navbar-toggler" @onclick="ToggleNavMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </Authorized>
+    </AuthorizeView>    
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <ul class="nav flex-column">
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="fa fa-home fa-lg" aria-hidden="true"></span> Home
+            </NavLink>
+        </li>
+
+        @* todo; move this into an "authorized" menu component or something? *@
+        <AuthorizeView>
+            <Authorized>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="users">
+                        <span class="fa fa-users fa-lg" aria-hidden="true"></span> Users
+                    </NavLink>
+                </li>
+            </Authorized>
+        </AuthorizeView>
+
+        <li><hr class="dropdown-divider"></li>
+        <li class="nav-item px-3 auth">
+            <LoginDisplay />
+        </li>
+    </ul>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}
