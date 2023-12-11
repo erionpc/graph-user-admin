@@ -7,6 +7,17 @@ The application is protected by authentication based on Microsoft Entra ID and i
 ## Purpose
 Managing Graph Users and illustrating how to use paging with Graph resources.
 
+## Pagination of users
+Based on the documentation of pagination with the Graph API in the following links 
+https://learn.microsoft.com/en-us/graph/paging?tabs=csharp, 
+https://learn.microsoft.com/en-us/graph/sdks/paging?tabs=csharp, you need to use a `$skipToken` to specify a pagination page. 
+With the latest Graph package (currently 5.x) this is made easier, via the method `WithUrl` in 'Microsoft.Graph.Users.UsersRequestBuilder'. 
+This method allows you to specify the URL that will be used to retrieve the users via Graph API, and if you just pass the `@odata.nextlink` as that URL, the job is done.  
+This is the strategy that the UI app follows for building a pager control. It builds a dictionary of items that link page numbers to paging links, 
+based on the `@odata.nextlink` returned by Graph API, and then calls the web API passing that link as a parameter. 
+See class [GraphUserAdmin.UI.Services.Users.UserService](./src/net8/GraphUserAdmin.API/Services/UserService.cs) and 
+[GraphUserAdmin.API.Services.UserService](./src/net8/GraphUserAdmin.UI/Services/Users/UserService.cs). 
+
 ## Set up
 1. In your Azure Entra ID tenant set up a new application registration for the API. 
    This app registration should have the following settings:
