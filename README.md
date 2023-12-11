@@ -48,3 +48,6 @@ See class [GraphUserAdmin.UI.Services.Users.UserService](./src/net8/GraphUserAdm
 
 ## Deploy to app service
 All you will need to deploy is GraphUserAdmin.API. This will deploy the API on the root and the UI in a "wwwroot" folder. Make sure that the configuration keys are set correctly on both the API and the UI.
+
+## Demo
+<iframe src="https://player.vimeo.com/video/893265326?h=841d50d670" width="640" height="564" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
