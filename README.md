@@ -51,4 +51,3 @@ All you will need to deploy is GraphUserAdmin.API. This will deploy the API on t
 
 ## Demo
 https://github.com/erionpc/graph-user-admin/assets/4866068/0996ff32-69e7-4643-8ed4-4c3644c5ac34
-
